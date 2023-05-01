@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using DocumentFormat.OpenXml.Bibliography;
 
+
 namespace CompareFolders
 {
     public class Files
@@ -45,13 +46,14 @@ namespace CompareFolders
                 }
             }
             return num;
-        } 
-        public static void Main(string[] args)
-        {
-           
-            
+        }
 
-            //foreach (string path in str)
+
+        public static XmlDocument Compare(string oldPath, string newPath)
+        {
+            XmlDocument xml = new XmlDocument();
+            // TODO: fill "xml" here
+            //
             {
                 if (File.Exists(@str[0]))
                 {
@@ -67,7 +69,7 @@ namespace CompareFolders
                 {
                     Console.WriteLine("{0} is not a valid file or directory.", @str[0]);
                 }
-               
+
             }
 
             {
@@ -85,7 +87,7 @@ namespace CompareFolders
                 {
                     Console.WriteLine("{0} is not a valid file or directory.", @str[1]);
                 }
-               
+
             }
 
 
@@ -96,8 +98,8 @@ namespace CompareFolders
             var list1 = new List<Files>();
             var list2 = new List<Files>();
 
-            for (int l=0; l< i; l++ )
-            list1.Add(new Files() { ID = l, FileName = strArr1[l] });
+            for (int l = 0; l < i; l++)
+                list1.Add(new Files() { ID = l, FileName = strArr1[l] });
 
             for (int m = 0; m < j; m++)
                 list2.Add(new Files() { ID = m, FileName = strArr2[m] });
@@ -111,36 +113,55 @@ namespace CompareFolders
                 .ToList()
                 .ForEach(x => Console.WriteLine(x));
 
-           
-            //< Delete file =
-             var result = list2.Where(p => list1.All(p2 => p2.FileName != p.FileName));
+
+
+            var result = list2.Where(p => list1.All(p2 => p2.FileName != p.FileName));
             var lstCount1 = Count<Files>(result);
-           
-            //< Create file =
+
+
             var result2 = list1.Where(p => list2.All(p2 => p2.FileName != p.FileName));
             var lstCount2 = Count<Files>(result2);
-var dt = System.DateTime.UtcNow;
+            var dt = System.DateTime.UtcNow;
             var strDt = dt.ToShortTimeString();
-            strDt = strDt.Replace(":","");
+            strDt = strDt.Replace(":", "");
             
-            
-            using (StreamWriter sw = new StreamWriter(@"C:\OUT\outputfile" + strDt + ".xml"))
+            var filename = @"c:\temp\outputfile" + strDt + ".xml";
+            using (StreamWriter sw = new StreamWriter(@filename))
             {
-                sw.WriteLine("<? xml version = \"1.0\" encoding = \"utf-8\" ?>");
+                var xmlLoad = "";
+                sw.WriteLine("<?xml version = \"1.0\" encoding = \"utf-8\" ?>");
+                xmlLoad = "<?xml version = \"1.0\" encoding = \"utf-8\" ?>";
                 sw.WriteLine("<Diff>");
+                xmlLoad += "<Diff>";
                 foreach (var item in result)
                 {
-                    sw.WriteLine("<Delete file =" + item.FileName + " />");
+                    sw.WriteLine("<Delete file ='" + item.FileName + "' />");
+                    xmlLoad += "<Delete file ='" + item.FileName + "' />";
                 }
                 foreach (var item in result2)
                 {
-                    sw.WriteLine("<Create file =" + item.FileName + " />");
+                    sw.WriteLine("<Create file ='" + item.FileName + "' />");
+                    xmlLoad += "<Create file ='" + item.FileName + "' />";
                 }
                 sw.WriteLine("</Diff>");
+                xmlLoad += "</Diff>";
+                xml.LoadXml(xmlLoad);
             }
 
-            Console.ReadKey();
-}
+
+
+
+
+            
+            
+            return xml;
+        }
+        public static void Main(string[] args)
+        {
+
+            Compare(str[0], str[1]);
+
+        }
 public static void ProcessDirectory(string targetDirectory)
 {
 // Process the list of files found in the directory.
