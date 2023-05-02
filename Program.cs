@@ -19,7 +19,7 @@ namespace CompareFolders
 
     public static class Program
     {
-        public static string[] str = { @"C:\in", @"C:\out" };
+        public static string[] str = { @"C:\in", @"C:\out" }; //comparing folders
         public static string[] strArr1 = new string[5000000];
         public static string[] strArr2 = new string[5000000];
         public static string[] strArr3 = new string[5000000];
@@ -28,7 +28,8 @@ namespace CompareFolders
         public static int j = 0;
         public static int count1 = 0;
         public static int count2 = 0;
-
+        public static List<String> files1 = new List<String>();
+        public static List<String> files2 = new List<String>();
         public static int Count<TSource>(this IEnumerable<TSource> source)
         {
             
@@ -47,7 +48,76 @@ namespace CompareFolders
             }
             return num;
         }
+        
+        public static void PrintDirectoryTree1(string directory, int lvl, string[] excludedFolders = null, string lvlSeperator = "")
+        {
+            excludedFolders = excludedFolders ?? new string[0];
+            
+            
+            foreach (string f in Directory.GetFiles(directory))
+            {
+                int numberCharacters = @str[0].Length;
+                var path = directory + "\\" + Path.GetFileName(f);
 
+
+                    path = path.Substring(numberCharacters, path.Length - numberCharacters);
+
+
+                files1.Add(path);
+            }
+
+            foreach (string d in Directory.GetDirectories(directory))
+            {
+                //Console.WriteLine(directory + "\\" + Path.GetFileName(d));
+                var path = directory + "\\" + Path.GetFileName(d);
+
+                int numberCharacters = @str[0].Length;
+                path = path.Substring(numberCharacters, path.Length - numberCharacters);
+
+
+                files1.Add(path);
+                
+                if (lvl > 0 && Array.IndexOf(excludedFolders, Path.GetFileName(d)) < 0)
+                {
+                    PrintDirectoryTree1(d, lvl - 1, excludedFolders,  lvlSeperator);
+                }
+            }
+        }
+        public static void PrintDirectoryTree2(string directory, int lvl, string[] excludedFolders = null, string lvlSeperator = "")
+        {
+            excludedFolders = excludedFolders ?? new string[0];
+            
+
+            foreach (string f in Directory.GetFiles(directory))
+            {
+                //Console.WriteLine(directory + "\\" + Path.GetFileName(f));
+                var path = directory + "\\" + Path.GetFileName(f);
+
+                int numberCharacters = @str[1].Length;
+                path = path.Substring(numberCharacters, path.Length - numberCharacters);
+
+
+                files2.Add(path);
+            }
+
+            foreach (string d in Directory.GetDirectories(directory))
+            {
+                //Console.WriteLine(directory + "\\" + Path.GetFileName(d));
+                var path = directory + "\\" + Path.GetFileName(d);
+
+                int numberCharacters = @str[1].Length;
+                path = path.Substring(numberCharacters, path.Length - numberCharacters);
+
+
+                files2.Add(path);
+
+                if (lvl > 0 && Array.IndexOf(excludedFolders, Path.GetFileName(d)) < 0)
+                {
+                    PrintDirectoryTree2(d, lvl - 1, excludedFolders, lvlSeperator);
+                }
+            }
+        }
+        
 
         public static XmlDocument Compare(string oldPath, string newPath)
         {
@@ -55,38 +125,12 @@ namespace CompareFolders
             // TODO: fill "xml" here
             //
             {
-                if (File.Exists(@str[0]))
-                {
-                    // This path is a file
-                    ProcessFile(@str[0]);
-                }
-                else if (Directory.Exists(@str[0]))
-                {
-                    // This path is a directory
-                    ProcessDirectory(@str[0]);
-                }
-                else
-                {
-                    Console.WriteLine("{0} is not a valid file or directory.", @str[0]);
-                }
+                
 
             }
 
             {
-                if (File.Exists(@str[1]))
-                {
-                    // This path is a file
-                    ProcessFile2(@str[1]);
-                }
-                else if (Directory.Exists(@str[1]))
-                {
-                    // This path is a directory
-                    ProcessDirectory2(@str[1]);
-                }
-                else
-                {
-                    Console.WriteLine("{0} is not a valid file or directory.", @str[1]);
-                }
+               
 
             }
 
@@ -95,37 +139,41 @@ namespace CompareFolders
 
 
 
-            var list1 = new List<Files>();
-            var list2 = new List<Files>();
-
-            for (int l = 0; l < i; l++)
-                list1.Add(new Files() { ID = l, FileName = strArr1[l] });
-
-            for (int m = 0; m < j; m++)
-                list2.Add(new Files() { ID = m, FileName = strArr2[m] });
+            
 
 
 
 
 
 
-            list1.Where(x => list2.Contains(x))
-                .ToList()
-                .ForEach(x => Console.WriteLine(x));
+            
 
 
-
-            var result = list2.Where(p => list1.All(p2 => p2.FileName != p.FileName));
-            var lstCount1 = Count<Files>(result);
+            PrintDirectoryTree1(str[0], 2, new string[] { "folder3" });
 
 
-            var result2 = list1.Where(p => list2.All(p2 => p2.FileName != p.FileName));
-            var lstCount2 = Count<Files>(result2);
+            foreach (var item in files1)
+            {
+                Console.WriteLine(item);
+            }
+            PrintDirectoryTree2(str[1], 2, new string[] { "folder5" });
+
+
+            foreach (var item in files2)
+            {
+                Console.WriteLine(item);
+            }
+           
             var dt = System.DateTime.UtcNow;
             var strDt = dt.ToShortTimeString();
             strDt = strDt.Replace(":", "");
+            var path = @"c:\temp";
+            if (!Directory.Exists(path))
+            {
+               DirectoryInfo di = Directory.CreateDirectory(path);
+            }
             
-            var filename = @"c:\temp\outputfile" + strDt + ".xml";
+            var filename = @path + @"\outputfile" + strDt + ".xml";
             using (StreamWriter sw = new StreamWriter(@filename))
             {
                 var xmlLoad = "";
@@ -133,15 +181,47 @@ namespace CompareFolders
                 xmlLoad = "<?xml version = \"1.0\" encoding = \"utf-8\" ?>";
                 sw.WriteLine("<Diff>");
                 xmlLoad += "<Diff>";
-                foreach (var item in result)
+                foreach (var item in files1)
                 {
-                    sw.WriteLine("<Delete file ='" + item.FileName + "' />");
-                    xmlLoad += "<Delete file ='" + item.FileName + "' />";
+                    var strFolder=str[0] + @item;
+                    FileAttributes attr = File.GetAttributes(strFolder);
+                    
+
+                    //detect whether its a directory or file
+                    if (((attr & FileAttributes.Directory) == FileAttributes.Directory))
+                    {
+                        if (IsDirectoryEmpty(strFolder)) 
+                        {
+                            sw.WriteLine("<Delete folder ='" + item + "' />");
+                            xmlLoad += "<Delete folder ='" + item + "' />"; 
+                        }
+                        
+                    }
+                    else
+                    {
+                        sw.WriteLine("<Delete file ='" + item + "' />");
+                        xmlLoad += "<Delete file ='" + item + "' />";
+                    }
                 }
-                foreach (var item in result2)
+                foreach (var item in files2)
                 {
-                    sw.WriteLine("<Create file ='" + item.FileName + "' />");
-                    xmlLoad += "<Create file ='" + item.FileName + "' />";
+                    var strFolder = str[1] + @item;
+                    FileAttributes attr = File.GetAttributes(strFolder);
+
+                    //detect whether its a directory or file
+                    if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+                      
+                        {
+                            sw.WriteLine("<Create folder ='" + item + "' />");
+                            xmlLoad += "<Create folder ='" + item + "' />";
+                        }
+                        else 
+                        {
+                               sw.WriteLine("<Create file ='" + item + "' />");
+                               xmlLoad += "<Create file ='" + item + "' />"; 
+                        }
+                       
+                    
                 }
                 sw.WriteLine("</Diff>");
                 xmlLoad += "</Diff>";
@@ -162,62 +242,23 @@ namespace CompareFolders
             Compare(str[0], str[1]);
 
         }
-public static void ProcessDirectory(string targetDirectory)
-{
-// Process the list of files found in the directory.
-string[] fileEntries = Directory.GetFiles(targetDirectory);
-foreach (string fileName in fileEntries)
-    ProcessFile(fileName);
 
-// Recurse into subdirectories of this directory.
-string[] subdirectoryEntries = Directory.GetDirectories(targetDirectory);
-foreach (string subdirectory in subdirectoryEntries)
-    ProcessDirectory(subdirectory);
-}
+        public static bool IsDirectoryEmpty(string path)
+        {
+            return IsDirectoryEmptyFind(new DirectoryInfo(path));
+        }
 
+        public static bool IsDirectoryEmptyFind(DirectoryInfo directory)
+        {
+            FileInfo[] files = directory.GetFiles();
+            DirectoryInfo[] subdirs = directory.GetDirectories();
 
-public static void ProcessFile(string @path)
-{
-int numberCharacters = @str[0].Length;
-path = path.Substring(numberCharacters, path.Length-numberCharacters);
-
-Console.WriteLine(
-new XElement("Node",
-new XAttribute("Bar", "file"),
-new XElement("Nested", @path)));
-
-strArr1[i] = @path;
-i++;
-
-}
+            return (files.Length == 0 && subdirs.Length == 0);
+        }
 
 
-public static void ProcessDirectory2(string targetDirectory)
-{
-// Process the list of files found in the directory.
-string[] fileEntries = Directory.GetFiles(targetDirectory);
-foreach (string fileName in fileEntries)
-    ProcessFile2(fileName);
 
-// Recurse into subdirectories of this directory.
-string[] subdirectoryEntries = Directory.GetDirectories(targetDirectory);
-foreach (string subdirectory in subdirectoryEntries)
-    ProcessDirectory2(subdirectory);
-}
 
-// Insert logic for processing found files here.
-public static void ProcessFile2(string @path)
-{
-int numberCharacters = @str[1].Length;
-path = path.Substring(numberCharacters, path.Length - numberCharacters);
-Console.WriteLine(
- new XElement("Node",
- new XAttribute("Bar", "file"),
- new XElement("Nested", @path)));
-strArr2[j] = @path;
-j++;
-
-}
 
 
 
